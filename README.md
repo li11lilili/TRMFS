@@ -1,6 +1,6 @@
 # TRMFS
 
-## Tensorized Robust Multimodal Feature Selection with Dual-Regularization for Alzheimer's Disease Diagnosis
+## Tensorized robust multimodal feature selection with dual-regularization for Alzheimer's disease diagnosis
 
 
 ### Code

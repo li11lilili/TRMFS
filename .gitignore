@@ -1,0 +1,20 @@
+# ADNI data
+Datasets/ADNI/
+
+# Experimental outputs
+output/
+outputADNI/
+ConsoleLogs/
+*.mat
+*.log
+
+# MATLAB temporary files
+*.asv
+*.m~
+*.autosave
+slprj/
+codegen/
+
+# Operating-system files
+.DS_Store
+Thumbs.db

@@ -1,22 +1,12 @@
 function K = calculate_kernel(X, Y, kernel_type, params)
-    % 通用核矩阵计算函数
     % 
-    % 输入：
-    %   X          - 数据矩阵 (N x D) 
-    %   Y          - 数据矩阵 (M x D) 
-    %   kernel_type- 核函数类型，例如 'rbf', 'linear', 'polynomial'
-    %   params     - 核函数的参数 cell 数组
     %
-    % 输出：
-    %   K          - 核矩阵 (N x M)
 
-    % 核函数计算
     switch kernel_type
         case 'linear'
             K = X * Y';
             
         case 'rbf'
-            % 默认gamma
             if isempty(params)
                 % gamma = 1 / mean(pdist(X).^2);  
                 gamma = 1 / (size(X, 2) * var(X(:)));
@@ -29,7 +19,6 @@ function K = calculate_kernel(X, Y, kernel_type, params)
             K = exp(-gamma * dist_sq);
             
         case 'polynomial'
-            % 默认参数: gamma=1, coef0=1, degree=3
             if isempty(params)
                 gamma = 1; coef0 = 1; degree = 3;
             else

@@ -20,11 +20,11 @@ function recorder = runComputationSVM(np,method,X,Y,recorder,cp,parrun,task,pre_
 
     combos = paramSet2(np,fix);
     %combos = paramSet3(np,fix);
-    combos = combos(end:-1:1, :); % 从最后一列到第一列反向索引
+    combos = combos(end:-1:1, :);
 
     for i=1:size(combos,1)
         fix2param = combos(i,:);
-        fixed_idx = ~isinf(fix2param);   % 找出不为Inf的位置
+        fixed_idx = ~isinf(fix2param);
         if isempty(recorder)
             if ~isempty(defaultP)
                 fix2param(fixed_idx) = defaultP(fixed_idx);
@@ -32,7 +32,7 @@ function recorder = runComputationSVM(np,method,X,Y,recorder,cp,parrun,task,pre_
                 fix2param(fixed_idx) = 1;
             end
         else
-            fix2param(fixed_idx) = recorder.params(fixed_idx);  % 用param中对应值替换
+            fix2param(fixed_idx) = recorder.params(fixed_idx);
         end
         params = feval(method).init_param(fix2param);
         % params(:,[3,4]) = 10;

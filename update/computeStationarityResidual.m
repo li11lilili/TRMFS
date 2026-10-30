@@ -1,7 +1,5 @@
 function [residual,residuals] = computeStationarityResidual( ...
     obj,Y,z_residual,s_equation_residual)
-%COMPUTESTATIONARITYRESIDUAL 计算统一目标式的一阶KKT残差
-% 各分量依次对应W、P、A、B、J、S、Z和gamma
 
     rW=0;
     rP=0;

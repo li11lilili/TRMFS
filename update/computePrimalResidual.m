@@ -1,7 +1,4 @@
 function [residual,residuals] = computePrimalResidual(obj,X,HX,PS)
-%COMPUTEPRIMALRESIDUAL 计算四类约束的矩阵无穷范数残差
-% MATLAB 对矩阵的 norm(R,inf) 返回最大绝对行和，
-% 与 RMoGL 公开源码的约束残差计算方式一致。
 
     if nargin < 3 || isempty(HX)
         HX=graphFilterS(obj,X);

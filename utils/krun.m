@@ -1,18 +1,15 @@
 function recorder = krun(method, X, Y, params, numRepeat, numFold, varargin)
-    % 输入：params: 多行参数矩阵，每行是一个方法的超参数组合
-    % 参数初始化
-    numParams = size(params, 1); % 参数组合数量
-    FeatureSpace = 1:1:10; % 要测试的特征数量范围
+    numParams = size(params, 1);
+    FeatureSpace = 1:1:10;
     % maxNF = max(featureCounts);
-    seeds = randi([1, 10000], 1, numRepeat); % 生成一组随机种子，1行10列
-    verbose = 1; % 是否输出调试信息
+    seeds = randi([1, 10000], 1, numRepeat);
+    verbose = 1;
     track = ParameterTracker(size(params, 2)+1, numParams);
     recorder = Recorder(numRepeat, numFold);
-    repeatParams = 1; % 表示启用参数的特殊重复处理（负值替换成对应的正值）
-    skipExist = 1; % 表示启用跳过已存在参数组合的机制，节省计算资源
+    repeatParams = 1;
+    skipExist = 1;
 
-    % 参数解析
-    p = inputParser; % 创建一个对象P方便管理和解析函数输入的可选参数
+    p = inputParser;
     addParameter(p, 'v', verbose);
     addParameter(p, 'nf', FeatureSpace);
     addParameter(p, 's', seeds);
@@ -24,9 +21,8 @@ function recorder = krun(method, X, Y, params, numRepeat, numFold, varargin)
     addParameter(p, 'pr', 1);
     addParameter(p, 'task', '');
     addParameter(p, 'rateSource', 'AugLoss');
-    parse(p, varargin{:}); % 解析传入的可变参数 varargin，赋值到之前添加的参数中，完成参数传入和赋值
+    parse(p, varargin{:});
 
-    % 提取参数，从解析器结果 p.Results 中提取参数赋值到本地变量，方便后续使用
     verbose = p.Results.v;
     FeatureSpace = p.Results.nf;
     seeds = p.Results.s;
@@ -61,26 +57,26 @@ function recorder = krun(method, X, Y, params, numRepeat, numFold, varargin)
         track.seeds = seeds;
         recorder.seeds = seeds;
     end
-    numViews = numel(X); % 获取模态数
+    numViews = numel(X);
     %%
     % FeatureSpace = 10;
     % FeatureSpace = ceil(10 / numViews);
     %%
-    numFeatures = numel(FeatureSpace); % 特征空间参数的数量
+    numFeatures = numel(FeatureSpace);
     maxNF = max(FeatureSpace);
-    tempSpace = FeatureSpace; % 临时存储特征空间数组
+    tempSpace = FeatureSpace;
     skipSpace = FeatureSpace .* numViews;
 
-    numTotal = numRepeat*numFold; % 总实验次数
-    Wlist = cell(1,numTotal); % 权重矩阵列表
+    numTotal = numRepeat*numFold;
+    Wlist = cell(1,numTotal);
     Xtrain = cell(1,numTotal);
     Xtest = cell(1,numTotal);
     Ytrain = cell(1,numTotal);
     Ytest = cell(1,numTotal);
-    tempResults = cell(1, numTotal); % 保存每次实验结果
+    tempResults = cell(1, numTotal);
 
     for i = 1:numRepeat
-        [Xd, Yd] = shuffledData(X, Y, seeds(i)); % 调用外部函数把数据集中的顺序打乱，shuffledData 的作用是：根据随机种子对多模态数据 X 和标签 Y 进行同步随机打乱
+        [Xd, Yd] = shuffledData(X, Y, seeds(i));
         rng(seeds(i));
         cv = cvpartition(Yd(:,1), 'KFold', numFold, 'Stratify', true);
         bi = (i-1)*numFold + 1;
@@ -94,16 +90,15 @@ function recorder = krun(method, X, Y, params, numRepeat, numFold, varargin)
     skipped = 0;
     havePrintf = 0;
 
-    for pidx = 1:numParams % 遍历所有参数组合
+    for pidx = 1:numParams
         param = params(pidx,:);
-        if repeatParams % 处理参数小于0的情况
+        if repeatParams
             idx = find(param < 0);
             param(idx) = param(abs(param(idx)));
         end
 
-        if skipExist && track.checkExist([skipSpace', repmat(param, numFeatures, 1)]) % 已经遍历过的参数组合跳过
+        if skipExist && track.checkExist([skipSpace', repmat(param, numFeatures, 1)])
             if ~havePrintf
-                % cprintf('red','已有参数组合，将跳过。\n');
                 disp('已有参数组合，将跳过。');
                 havePrintf = 1;
             end
@@ -125,13 +120,11 @@ function recorder = krun(method, X, Y, params, numRepeat, numFold, varargin)
         tic;
         if useParfor
             parfor idx = 1:numTotal
-                % 执行 run 方法
                 ins{idx} = ins{idx}.run(Xtrain{idx}, Ytrain{idx}, param, seeds(idx));
                 Wlist{idx}= ins{idx}.W;
             end
         else
-            for idx = 1:numTotal % 执行My里的run方法，获取其投影矩阵W存入Wlist
-                % 执行 run 方法
+            for idx = 1:numTotal
                 ins{idx} = ins{idx}.run(Xtrain{idx}, Ytrain{idx}, param, seeds(idx));
                 Wlist{idx}= ins{idx}.W;
             end
@@ -146,18 +139,17 @@ function recorder = krun(method, X, Y, params, numRepeat, numFold, varargin)
                 tempResults{idx} = Evaluate(fxtrain, fxtest, Ytrain{idx}, Ytest{idx}, 'kernel', 'linear','FeatureSpace',FeatureSpace);
             end
         else
-            for idx = 1:numTotal % 根据学习到的W进行特征选择并训练分类器，评估指标
+            for idx = 1:numTotal
                 [fxtrain, ~, fxtest] = FeatureSelection(Xtrain{idx}, Wlist{idx}, maxNF, 'X2', Xtest{idx});
                 tempResults{idx} = Evaluate(fxtrain, fxtest, Ytrain{idx}, Ytest{idx}, 'kernel', 'linear','FeatureSpace',FeatureSpace);
             end
         end
 
-        FeatureSpace = tempSpace; % 每个元素表示某一次实验中选取的特征数量nf（1~10）
+        FeatureSpace = tempSpace;
         resultsList = unFlodResult(tempResults,numRepeat,numFold,numFeatures); 
-        bestNf = FeatureSpace(1); % bestNf 初始化为第一个特征数量
-        % localRe 是一个用于记录当前参数组合下最佳特征数量的 Recorder 对象（自定义类），用于保存评估过程中的性能指标。
+        bestNf = FeatureSpace(1);
         localRe = Recorder(numRepeat, numFold);
-        for i = 1:numFeatures % 遍历所有特征数量选项，逐个处理每种特征数量对应的实验结果。
+        for i = 1:numFeatures
             nf = FeatureSpace(i);
             track = track.addParameters([nf*numViews, param], resultsList(i,:));
             tempRe = Recorder(numRepeat, numFold).log(resultsList(i,:));
@@ -222,7 +214,6 @@ function recorder = saveRecorderState(recorder,track,ins,methodSeeds,method,task
     recorder.method = method;
     recorder.task = taskName;
     % if isprop(ins{1,1}, 'runtime')
-    %     % 优化14: 使用向量化操作计算平均运行时间
     %     runtimes = cellfun(@(x) x.runtime, ins(:));
     %     recorder.runtime = mean(runtimes(:));
     % end
@@ -230,8 +221,6 @@ function recorder = saveRecorderState(recorder,track,ins,methodSeeds,method,task
     recorder.save(['output\',taskName,'_',method,'_re_temp.mat'], 0);
 end
 
-% unFlodResult 函数主要功能是把按“全部重复次数×全部折数×特征数量”展开的结果缓存（resultCache）重新整理
-% （unfold）成一个二维cell矩阵 resultsList，方便后续基于“特征数量 × 重复次数”的结构访问。
 function resultsList = unFlodResult(resultCache,numRepeat,numFold,numFeatures)
         numTotal = numel(resultCache);
         tempList.acc = NaN(numFeatures,numTotal);

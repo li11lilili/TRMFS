@@ -1,9 +1,6 @@
 function La = computeLaplacianLa(obj)
-% computeLaplacian 计算共享相似矩阵 S 的对称归一化拉普拉斯矩阵
 %
-% 输入：obj
 %
-% 输出：归一化后的拉普拉斯L
 %   
     
     Z=max(real((obj.Z+obj.Z')/2),0);

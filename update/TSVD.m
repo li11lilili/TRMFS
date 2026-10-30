@@ -3,7 +3,6 @@ function [J, f] = TSVD(Q, ref, dim)
         dim = 0;
     end
 
-    % 调整维度
     Q = shiftdim(Q, dim);
     [~, ~, n3] = size(Q);
 
@@ -29,7 +28,6 @@ function [J, f] = TSVD(Q, ref, dim)
     Jf = zeros(size(Qf));
     f = 0;
 
-    % 对每个频率切片进行SVD阈值化
     for i = 1:n3
         Qi=Qf(:,:,i);
         symmetry_error=norm(Qi-Qi','fro')/(norm(Qi,'fro')+eps);
@@ -47,7 +45,6 @@ function [J, f] = TSVD(Q, ref, dim)
             Jf(:,:,i)=U*diag(s_new)*V';
         end
 
-        % 可选：累积核范数
         if nargout > 1
             f = f + sum(s_new);
         end
@@ -57,7 +54,6 @@ function [J, f] = TSVD(Q, ref, dim)
         f = f/n3;
     end
 
-    % 逆FFT
     J = ifft(Jf, [], 3, 'symmetric');
     J = shiftdim(J, 3 - dim);
 end

@@ -1,48 +1,43 @@
 classdef Recorder
     properties
-        % 评估指标
-        ACC        % 准确度
-        SEN        % 灵敏度
-        SPE        % 特异性
-        AUC        % 曲线下面积
-        F1         % F1分数
+        ACC
+        SEN
+        SPE
+        AUC
+        F1
         PRE
         
-        % 训练数据
-        Loss = {}      % 原目标函数历史
-        AugLoss = {}   % 增广拉格朗日函数历史
-        Err = {}       % 当前选定的函数相对变化率历史
-        Err2 = {}      % max(r1,r2,r3,r4) 约束残差历史
-        LossRate = {}  % 原目标函数相对变化率历史
-        AugLossRate = {} % 增广拉格朗日函数相对变化率历史
-        ResidualDetail = {} % 每折的 4×K 约束残差历史
+        Loss = {}
+        AugLoss = {}
+        Err = {}
+        Err2 = {}
+        LossRate = {}
+        AugLossRate = {}
+        ResidualDetail = {}
         RateSource = 'AugLoss'
-        FoldConverged  % 每个重复、每一折是否满足停止条件
-        Iterations     % 每个重复、每一折的实际迭代次数
-        FinalResidual  % 每个重复、每一折的最终无穷范数联合残差
-        FinalRate      % 每个重复、每一折的最终选定函数变化率
-        FinalMu        % 每个重复、每一折结束时的惩罚参数
-        FSID = {}      % 特征选择的ID
+        FoldConverged
+        Iterations
+        FinalResidual
+        FinalRate
+        FinalMu
+        FSID = {}
         nfs = -1;
         
-        % 预测结果
-        labs      % 模型预测
-        decs       % 决策值
+        labs
+        decs
         
-        % 实验参数
-        params     % 固定的实验参数
+        params
         
-        % 实验配置
-        r          % 实验重复次数
-        k          % k折交叉验证次数
+        r
+        k
 
         % seeds
-        evaSeeds % 评估种子
-        seeds % 实验种子
+        evaSeeds
+        seeds
 
-        runtime = 0 % 记录时间
+        runtime = 0
 
-        cr % 当前重复次数
+        cr
 
         pt
 
@@ -54,14 +49,12 @@ classdef Recorder
     end
     
     methods
-        % 构造函数，初始化所有属性
         function obj = Recorder(r, k, params)
             if nargin > 0
                 obj.cr = 0;
                 obj.r = r;
                 obj.k = k;
                 
-                % 预分配内存，避免动态扩展
                 obj.ACC = NaN(r, k);
                 obj.SEN = NaN(r, k);
                 obj.SPE = NaN(r, k);
@@ -73,7 +66,6 @@ classdef Recorder
                 % obj.seeds = NaN(1,r);
                 obj.seeds = [];
 
-                % 预分配训练数据存储
                 obj.Loss = cell(r,k);
                 obj.AugLoss = cell(r,k);
                 obj.Err = cell(r,k);
@@ -88,15 +80,13 @@ classdef Recorder
                 obj.FinalMu = NaN(r,k);
                 obj.FSID = cell(r,k);
                 
-                % 预分配预测结果存储
                 obj.labs = cell(r,k);
                 obj.decs = cell(r,k);
                 
-                % 初始化实验参数
                 if nargin > 2
-                    obj.params = params; % 设定固定的实验参数
+                    obj.params = params;
                 else
-                    obj.params = []; % 默认无参数
+                    obj.params = [];
                 end
             end
         end
@@ -137,7 +127,6 @@ classdef Recorder
             end
         end
 
-        % 获取评估指标
         function [value, stdV] = getMetrics(obj,type)
             switch lower(type)
                 case 'acc'
@@ -163,11 +152,10 @@ classdef Recorder
         
 
         
-        % 写入.mat文件
         function save(obj, filename,~)
             [parentDir, ~, ~] = fileparts(filename);
             if ~isfolder(parentDir) % ~exist(parentDir, 'dir')
-                mkdir(fullfile(pwd,parentDir));  % 创建父目录
+                mkdir(fullfile(pwd,parentDir));
             end
             save(filename, 'obj');
             if nargin < 3
@@ -175,7 +163,6 @@ classdef Recorder
             end
         end
         
-        % 从.mat文件加载数据
         function obj = load(~,filename)
             data = load(filename);
             obj = data.obj;
@@ -183,7 +170,6 @@ classdef Recorder
         end
 
         function [value, stdV] = getM(obj, type)
-            % 根据 type 返回不同的性能指标的平均值和标准差
             switch lower(type)
                 case 'acc'
                     cleaned_data = obj.ACC(~isnan(obj.ACC));
@@ -211,23 +197,18 @@ classdef Recorder
         end
 
         function printMetrics(obj)
-            % 定义需要计算的指标类型
             metrics = {'ACC', 'SEN', 'SPE', 'F1', 'AUC','PRE'};
             
-            % 打印表头
             fprintf('-----------------------------------------\n');
             fprintf('| Item \tMean\tStd \t|\n');
             fprintf('-----------------------------------------\n');
             
-            % 遍历每种指标类型
             for i = 1:length(metrics)
                 type = metrics{i};
-                [value, stdV] = obj.getM(type); % 调用 getM 计算均值和标准差
-                % 美观地打印结果
+                [value, stdV] = obj.getM(type);
                 fprintf('| %-4s \t%5.4f\t%5.4f\t|\n', type, value, stdV);
             end
             
-            % 打印表尾
             fprintf('-----------------------------------------\n');
         end
 
@@ -262,10 +243,8 @@ classdef Recorder
         end
 
         function [labslist,decslist] = plotROC(obj, r, k)
-            % 如果没有提供k，则合并r的所有k数据
             if nargin < 3, k = obj.k;end
             if nargin < 2, r = obj.r;end
-            % 没有提供k，合并该r的所有k折数据
             labslist = [];
             decslist = [];
             for ridx  = 1:r
@@ -281,10 +260,8 @@ classdef Recorder
                 fprintf('Error: Either decs or preds is empty.\n');
                 return
             end
-            % 使用合并的预测和决策值计算 ROC 曲线
             [fpr, tpr, ~, ~] = perfcurve(labslist(:), decslist(:), 1);
             
-            % 绘制ROC曲线
             figure;
             % plot(fpr, tpr, 'o-', 'LineWidth', 1);
             %             colors = ColorMap(2);
@@ -294,7 +271,6 @@ classdef Recorder
             xlabel('False Positive Rate (FPR)');
             ylabel('True Positive Rate (TPR)');
             % grid off;
-            % axis([0 1 0 1]);  % 设置坐标轴范围 [0, 1]
         end
 
         function loss = plotLoss(obj,be,r,k,color)

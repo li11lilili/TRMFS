@@ -60,9 +60,7 @@ function [X1,X2] = selectX(X1,X2,nf)
 end
 
 
-%% 辅助函数：统一标签格式为 [-1,1]
 function Y_out = standardizeLabels(Y_in)
-    % 如果全部已经为 -1 与 1 则保持，否则转换第一列数据：假设原始标签为0/1
     if ~all(ismember(Y_in, [-1, 1]))
         Y_out = Y_in(:,1) * 2 - 1;
     else
@@ -70,28 +68,19 @@ function Y_out = standardizeLabels(Y_in)
     end
 end
 
-% 辅助函数，用于计算各项评估指标
 function [acc, sen, spe, f1, auc,pre] = calculate_metrics(y_true, y_pred, decision_values)
-    % 计算混淆矩阵
     cm = confusionmat(y_true, y_pred);
-    % 提取混淆矩阵中的元素，避免重复索引
-    tp = cm(2, 2); % 真阳性
-    tn = cm(1, 1); % 真阴性
-    fp = cm(1, 2); % 假阳性
-    fn = cm(2, 1); % 假阴性
+    tp = cm(2, 2);
+    tn = cm(1, 1);
+    fp = cm(1, 2);
+    fn = cm(2, 1);
     tol = 1e-8;
 
 
-    % 计算准确率
     acc = (tp + tn) / (tp + tn + fp + fn + tol);
-    % 计算灵敏度（Sensitivity）/召回率（Recall）
     sen = tp / (tp + fn + tol);
-    % 计算特异性（Specificity）
     spe = tn / (tn + fp + tol);
-    % 计算精确率（Precision）
     pre = tp / (tp + fp + tol);
-    % 计算F1分数
     f1 = 2 * (pre * sen) / (pre + sen + tol);
-    % 计算AUC
     [~, ~, ~, auc] = perfcurve(y_true, decision_values, 1);
 end

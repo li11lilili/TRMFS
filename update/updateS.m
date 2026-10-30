@@ -1,5 +1,4 @@
 function [S,residual] = updateS(obj,X,Y,HX)
-%UPDATES 在统一目标式中更新各模态平滑表示S
 
     S=obj.S;
     if nargin < 4 || isempty(HX)

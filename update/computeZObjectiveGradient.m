@@ -1,6 +1,5 @@
 function [value,gradient,HX] = computeZObjectiveGradient(obj,Z,X, ...
     compute_gradient,Xcat,Ccat)
-%COMPUTEZOBJECTIVEGRADIENT 计算Z子问题的函数值和梯度
 
     if nargin < 4
         compute_gradient=nargout > 1;

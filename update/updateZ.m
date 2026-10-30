@@ -1,5 +1,4 @@
 function [Z,stationarity,HX,step] = updateZ(obj,X)
-%UPDATEZ 使用投影梯度和回溯线搜索更新共识滤波图Z
 
     Z=projectConsensusZ(obj.Z);
     Xcat=horzcat(X{:});
